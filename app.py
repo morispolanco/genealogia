@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests
+from datetime import datetime
 
 # Título de la aplicación
 st.title("Búsqueda de Ancestros")
@@ -10,22 +11,39 @@ nombre = st.text_input("Ingrese el nombre de su ancestro:")
 apellido = st.text_input("Ingrese el apellido de su ancestro:")
 fecha_nacimiento = st.date_input("Ingrese la fecha de nacimiento de su ancestro:")
 
+# Convertir fecha de nacimiento a cadena en formato requerido por la API (si es necesario)
+fecha_nacimiento_str = fecha_nacimiento.strftime("%Y-%m-%d")
+
 # Botón para iniciar la búsqueda
 if st.button("Buscar"):
-    # Llama a una API o consulta una base de datos
-    # A continuación se muestra un ejemplo ficticio de cómo podría estructurarse la llamada a una API
+    if nombre and apellido and fecha_nacimiento:
+        # Placeholder para la URL de la API de FamilySearch u otro servicio
+        url = "https://api.familysearch.org/search"
 
-    # Placeholder para la URL de la API de FamilySearch u otro servicio
-    url = f"https://api.familysearch.org/search?nombre={nombre}&apellido={apellido}&fecha_nacimiento={fecha_nacimiento}"
+        # Parámetros de consulta a la API
+        params = {
+            "nombre": nombre,
+            "apellido": apellido,
+            "fecha_nacimiento": fecha_nacimiento_str
+        }
 
-    # Hacer la solicitud a la API
-    response = requests.get(url)
-
-    # Asegurarse de que la respuesta es exitosa
-    if response.status_code == 200:
-        data = response.json()
-        # Mostrar los resultados en un DataFrame
-        df = pd.DataFrame(data['resultados'])
-        st.dataframe(df)
+        try:
+            # Hacer la solicitud a la API
+            response = requests.get(url, params=params)
+            
+            # Verifica si la respuesta es exitosa
+            if response.status_code == 200:
+                data = response.json()
+                # Verificar si hay resultados en la respuesta
+                if 'resultados' in data and len(data['resultados']) > 0:
+                    # Mostrar los resultados en un DataFrame
+                    df = pd.DataFrame(data['resultados'])
+                    st.dataframe(df)
+                else:
+                    st.warning("No se encontraron resultados. Por favor, intente de nuevo.")
+            else:
+                st.error(f"Error en la solicitud: {response.status_code}")
+        except requests.RequestException as e:
+            st.error(f"Error en la solicitud: {e}")
     else:
-        st.error("No se encontraron resultados. Por favor, intente de nuevo.")
+        st.warning("Por favor, completa todos los campos antes de realizar la búsqueda.")
